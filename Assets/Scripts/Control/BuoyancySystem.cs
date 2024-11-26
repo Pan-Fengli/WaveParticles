@@ -94,8 +94,6 @@ public class BuoyancySystem : SystemBase
     private Vector3 GravityForce;
     private Vector3 _worldUpVector = new Vector3(0.0f, 1.0f, 0.0f);//重力的反方向
     private Matrix4x4 _localToWorldMatrix;
-    private MeshFilter _meshFilter;
-    private float _simplificationRatio;
     private Vector3 _f0, _f1;
     private Vector3 _c0, _c1;
     private float _a0, _a1;
@@ -105,6 +103,8 @@ public class BuoyancySystem : SystemBase
     private float TotalTime;
 
     private bool applyWind = false;
+    private float XArea = 0.0f;
+    private float YArea = 0.0f;
     //-------------------------------------------------------------
     protected override void OnStartRunning()
     {
@@ -230,6 +230,8 @@ public class BuoyancySystem : SystemBase
         .WithoutBurst()
         .Run();
 
+        XArea = 0;
+        YArea = 0;
         Entities.WithAll<Tag_Player>().ForEach((
             ref Translation translation, 
             ref Rotation rotation, 
@@ -293,6 +295,10 @@ public class BuoyancySystem : SystemBase
                 localToWorld.Value,
                 Physics.gravity
             );
+            //Debug.Log("XArea:" + XArea);//迎风的，纵向的受风面积
+            //Debug.Log("YArea:" + YArea);//横向受风面积
+            ResourceLocatorService.Instance.XArea = XArea;
+            ResourceLocatorService.Instance.YArea = YArea;
 
             //计算重力
             GravityForce = Physics.gravity / physicsMass.InverseMass;
@@ -678,18 +684,39 @@ public class BuoyancySystem : SystemBase
         ResultAreas[index] = area;
         //粘滞力先不管，计算风力
 
+/*        float gama = Vector3.Dot(normal, windSpeed);
+        if (gama >= 0)
+        {
+            return;//只保留迎风的那面
+        }*/
+
+        //相对风速
+        Vector3 UA = windSpeed - velocity;
+        //船舶的纵向x方向向量
+        Vector3 xDir = -RigidbodyYDir;//TODO:实际是-y方向
+        //实际应该只取水平的分量，然后单位化
+        xDir = new Vector3(xDir.x, 0, xDir.z);
+        xDir = Vector3.Normalize(xDir);
+        //船舶的横向y方向向量
+        Vector3 yDir = RigidbodyXDir;//实际是x方向
+        yDir = new Vector3(yDir.x, 0, yDir.z);
+        yDir = Vector3.Normalize(yDir);
+
+        float cosAlpha = Vector3.Dot(normal, xDir);
+        float Sx = area * cosAlpha;
+        if (Sx > 0)
+            XArea += math.abs(Sx);
+        float cosBeta = Vector3.Dot(normal, yDir);
+        float Sy = area * cosBeta;
+        if (Sy > 0)
+            YArea += math.abs(Sy);
+
         float gama = Vector3.Dot(normal, windSpeed);
         if (gama >= 0)
         {
             return;//只保留迎风的那面
         }
 
-        //相对风速
-        Vector3 UA = windSpeed - velocity;
-        //船舶的纵向x方向向量
-        Vector3 xDir = -RigidbodyYDir;//实际是-y方向
-        //船舶的横向y方向向量
-        Vector3 yDir = RigidbodyXDir;//实际是x方向
         //风向角,windDir和xdir的夹角
         float phi = Vector3.Angle(windSpeed, xDir) * 180.0f / math.PI;//度为单位,转化为弧度
         //x方向载荷系数
@@ -699,14 +726,12 @@ public class BuoyancySystem : SystemBase
         float Cy = GetCy(phi);
         //Debug.Log("Cy" + Cy);
 
-        float cosAlpha = Vector3.Dot(normal, xDir);
-        float Sx = area * cosAlpha;
+        float Fx = -0.5f * Cx * airDensity * UA.magnitude * UA.magnitude * Sx;//纵向力//乘-1，是因为风的方向和法线是反向
+        float Fy = -0.5f * Cy * airDensity * UA.magnitude * UA.magnitude * Sy;//横向力
+        //船舶的纵横和世界坐标下的不一样...只要前面x和yDir改好了就可以了
+        windForce.x = Fx * xDir.x + Fy * yDir.x;
+        windForce.z = Fx * xDir.z + Fy * yDir.z;
 
-        float cosBeta = Vector3.Dot(normal, yDir);
-        float Sy = area * cosBeta;
-
-        windForce.x = Cx * airDensity * UA.magnitude * UA.magnitude * Sx;
-        windForce.z = Cy * airDensity * UA.magnitude * UA.magnitude * Sy;
         //实际世界坐标系下的横向其实是z，y是重力方向
     }
 
