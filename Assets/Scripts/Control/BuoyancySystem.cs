@@ -206,18 +206,29 @@ public class BuoyancySystem : SystemBase
         //Debug:把0~180°的风载荷的结果输出
         StreamWriter sw1 = new StreamWriter(@"D:\StudyAndWork\研二\南湖\水体模拟\看代码\WaveParticles\Assets\Scripts\Log\Boat\风载荷系数CX.txt");
         StreamWriter sw2 = new StreamWriter(@"D:\StudyAndWork\研二\南湖\水体模拟\看代码\WaveParticles\Assets\Scripts\Log\Boat\风载荷系数CY.txt");
+        StreamWriter sw3 = new StreamWriter(@"D:\StudyAndWork\研二\南湖\水体模拟\看代码\WaveParticles\Assets\Scripts\Log\Boat\风载荷系数CN.txt");
+        StreamWriter sw4 = new StreamWriter(@"D:\StudyAndWork\研二\南湖\水体模拟\看代码\WaveParticles\Assets\Scripts\Log\Boat\风载荷系数CK.txt");
+
         for (int i = 0; i <= 180; i++)
         {
             float phi = (float)i / 180.0f * math.PI;
             float cx = GetCx(phi);
             float cy = GetCy(phi);
+            float cN = GetCn(phi);
+            float cK = GetCk(phi);
             sw1.Write(cx);
             sw1.Write("\n");
             sw2.Write(cy);
             sw2.Write("\n");
+            sw3.Write(cN);
+            sw3.Write("\n");
+            sw4.Write(cK);
+            sw4.Write("\n");
         }
         sw1.Close();
         sw2.Close();
+        sw3.Close();
+        sw4.Close();
     }
 
     protected override void OnUpdate()
@@ -721,11 +732,11 @@ public class BuoyancySystem : SystemBase
         yDir = new Vector3(yDir.x, 0, yDir.z);
         yDir = Vector3.Normalize(yDir);
 
-        float cosAlpha = Vector3.Dot(normal, xDir);
+        float cosAlpha = Vector3.Dot(normal, -xDir);//往负方向投影是正的，才说明受风
         float Sx = area * cosAlpha;
         if (Sx > 0)
             XArea += math.abs(Sx);
-        float cosBeta = Vector3.Dot(normal, yDir);
+        float cosBeta = Vector3.Dot(normal, -yDir);
         float Sy = area * cosBeta;
         if (Sy > 0)
             YArea += math.abs(Sy);
@@ -745,20 +756,23 @@ public class BuoyancySystem : SystemBase
         float Cy = GetCy(phi);
         //Debug.Log("Cy" + Cy);
 
-        float Fx = -0.5f * Cx * airDensity * UA.magnitude * UA.magnitude * Sx;//纵向力//乘-1，是因为风的方向和法线是反向
-        float Fy = -0.5f * Cy * airDensity * UA.magnitude * UA.magnitude * Sy;//横向力
-        if (Vector3.Angle(xDir, -UA) < 0)
+        float Fx = 0.5f * Cx * airDensity * UA.magnitude * UA.magnitude * Sx;//纵向力
+        float Fy = 0.5f * Cy * airDensity * UA.magnitude * UA.magnitude * Sy;//横向力
+        if (Vector3.Dot(yDir, UA) < 0)
         {
             Fy = -Fy;
         }
         //船舶的纵横和世界坐标下的不一样...只要前面x和yDir改好了就可以了
         windForce.x = Fx * xDir.x + Fy * yDir.x;
         windForce.z = Fx * xDir.z + Fy * yDir.z;
-/*        Debug.Log("windForce:" + windForce);
+        Debug.Log("windForce:" + windForce);
         Debug.Log("phi:" + phi);
-        Debug.Log("Angle:" + Vector3.Angle(xDir, -windSpeed));
+        Debug.Log("Fx:" + Fx);
+        Debug.Log("Fy:" + Fy);
         Debug.Log("xDir:" + xDir);
-        Debug.Log("windSpeed:" + windSpeed);*/
+        Debug.Log("yDir:" + yDir);
+        Debug.Log("Cy:" + Cy);
+        Debug.Log("UA:" + UA);
 
         //实际世界坐标系下的横向其实是z，y是重力方向
     }
@@ -788,16 +802,24 @@ public class BuoyancySystem : SystemBase
         float Fx = 0.5f * Cx * airDensity * UA.magnitude * UA.magnitude * AF;//纵向力//乘-1，是因为风的方向和法线是反向
         float Fy = 0.5f * Cy * airDensity * UA.magnitude * UA.magnitude * AL;//横向力
         //横向力的方向和相对风向有关
-        if (Vector3.Angle(xDir, -UA) < 0)
+        float YForce = 1.0f;
+        if (Vector3.Dot(yDir, UA) < 0)
         {
             Fy = -Fy;
+            YForce = -1.0f;
         }
 
         //船舶的纵横和世界坐标下的不一样...只要前面x和yDir改好了就可以了
         windForce.x = Fx * xDir.x + Fy * yDir.x;
         windForce.z = Fx * xDir.z + Fy * yDir.z;
-        
+
         //windTorque
+        float Cn = GetCn(phi);
+        float Ck = GetCk(phi);
+        float Mk = YForce * 0.5f * Ck * airDensity * UA.magnitude * UA.magnitude * AL * AL * LOA;//横摇
+        float Mn = YForce * 0.5f * Cn * airDensity * UA.magnitude * UA.magnitude * AL * AL * LOA;//艏摇
+
+
     }
 
     private void CalculateForces(in Vector3 p0, in Vector3 p1, in Vector3 p2,

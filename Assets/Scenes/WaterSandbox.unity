@@ -4043,8 +4043,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_HeightFieldRT: {fileID: 8400000, guid: 06da4165401c1f545985928fd33fb4dc, type: 2}
   m_MainCam: {fileID: 963194227}
-  N: 10
-  M: 10
+  N: 0
+  M: 0
   L: 10
   COM: {x: -0.3195721, y: 0.6459954, z: -0.85}
   simulationMesh: {fileID: 4300000, guid: bda328241b654f24b933549e265c90d4, type: 2}
