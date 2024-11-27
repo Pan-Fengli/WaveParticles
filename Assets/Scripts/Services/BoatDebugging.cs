@@ -16,6 +16,7 @@ public class BoatDebugging : MonoBehaviour
     FileInfo ExcelFile;
     ExcelPackage package;
     ExcelWorksheet worksheet;
+    ExcelWorksheet worksheet2;
     private Text m_Text;
     private float timer = 0f;
     private float time = 0f;
@@ -23,6 +24,8 @@ public class BoatDebugging : MonoBehaviour
 
     private float XArea = 0f;
     private float YArea = 0f;
+    private float FX = 0f;
+    private float FY = 0f;
     // Start is called before the first frame update
     void Load()
     {
@@ -37,9 +40,12 @@ public class BoatDebugging : MonoBehaviour
         }
         //excel
         excel_path = path + "\\" + DateTime.Now.ToString("MM-dd HH mm") + "data.xlsx";
+        //excel_path = path + "\\" + DateTime.Now.ToString("MM-dd HH mm") + "Force.xlsx";
+
         ExcelFile = new FileInfo(excel_path);
         package = new ExcelPackage(ExcelFile);
         worksheet = package.Workbook.Worksheets.Add(DateTime.Now.ToString("MM-dd HH:mm:ss"));
+        worksheet2 = package.Workbook.Worksheets.Add(DateTime.Now.ToString("Force"));
 
         m_Text = TextUI.GetComponent<Text>();
     }
@@ -52,8 +58,38 @@ public class BoatDebugging : MonoBehaviour
     void Update()
     {
 
+        updateArea();
+
+
+    }
+    private void updateForce()
+    {
+        FX = ResourceLocatorService.Instance.FX;
+        FY = ResourceLocatorService.Instance.FY;
+        //定时向log里面写入
+        //Debug.Log("label"+label);
+        timer += Time.deltaTime;
+        if (timer >= 0.1)// 定时0.1秒 10hz
+        {
+            //writeLog();
+            time += timer;
+            timer = 0f;
+
+            //写入excel
+            row_index++;
+            worksheet.Cells[row_index, 1].Value = time;
+            worksheet.Cells[row_index, 2].Value = FX;
+            worksheet.Cells[row_index, 3].Value = FY;
+
+            m_Text.text = time.ToString();
+        }
+    }
+    private void updateArea()
+    {
         XArea = ResourceLocatorService.Instance.XArea;
         YArea = ResourceLocatorService.Instance.YArea;
+        FX = ResourceLocatorService.Instance.FX;
+        FY = ResourceLocatorService.Instance.FY;
         //定时向log里面写入
         //Debug.Log("label"+label);
         timer += Time.deltaTime;
@@ -69,9 +105,12 @@ public class BoatDebugging : MonoBehaviour
             worksheet.Cells[row_index, 2].Value = XArea;
             worksheet.Cells[row_index, 3].Value = YArea;
 
+            worksheet2.Cells[row_index, 1].Value = time;
+            worksheet2.Cells[row_index, 2].Value = FX;
+            worksheet2.Cells[row_index, 3].Value = FY;
+
             m_Text.text = time.ToString();
         }
-        
     }
     private void OnDestroy()
     {

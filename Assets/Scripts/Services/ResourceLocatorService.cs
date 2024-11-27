@@ -39,11 +39,31 @@ namespace OneBitLab.Services
         public Vector3 WindForce = new Vector3(0, 0, 0);
         [ReadOnly]
         public Vector3 ResultForce = new Vector3(0, 0, 0);
+        [ReadOnly]
+        public Vector3 windTorqueSum = new Vector3(0, 0, 0);
+        [ReadOnly]
+        public Vector3 oldWindForce = new Vector3(0, 0, 0);
+        [ReadOnly]
+        public Vector3 oldWindTorque = new Vector3(0, 0, 0);
 
         [ReadOnly]
         public float XArea = 0.0f;
         [ReadOnly]
         public float YArea = 0.0f;
+
+        [ReadOnly]
+        public float FX = 0.0f;
+        [ReadOnly]
+        public float FY = 0.0f;
+
+        [ReadOnly]
+        public float FXOld = 0.0f;
+        [ReadOnly]
+        public float FYOld = 0.0f;
+
+        [ReadOnly]
+        public float Phi = 0.0f;
+
     }
 }
 

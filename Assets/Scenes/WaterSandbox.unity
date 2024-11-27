@@ -2722,7 +2722,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 865256834}
-  m_LocalRotation: {x: -0.7071068, y: 0, z: 0, w: 0.7071068}
+  m_LocalRotation: {x: -0.5, y: 0.5, z: 0.5, w: 0.5}
   m_LocalPosition: {x: -0.76, y: 0.15, z: -1.29}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
@@ -2732,7 +2732,7 @@ Transform:
   - {fileID: 909854995}
   m_Father: {fileID: 0}
   m_RootOrder: 20
-  m_LocalEulerAnglesHint: {x: -90, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: -90, y: 90, z: 0}
 --- !u!114 &865256836
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4048,7 +4048,7 @@ MonoBehaviour:
   L: 10
   COM: {x: -0.3195721, y: 0.6459954, z: -0.85}
   simulationMesh: {fileID: 4300000, guid: bda328241b654f24b933549e265c90d4, type: 2}
-  WorldCOM: {x: -1.0795721, y: -0.70000017, z: -1.9359953}
+  WorldCOM: {x: -1.4059954, y: -0.70000005, z: -0.9704279}
   LOA: 8.319995
   B: 3.49067
   AF: 3.29488
@@ -4061,8 +4061,16 @@ MonoBehaviour:
   WaterForce: {x: 0, y: 0, z: 0}
   WindForce: {x: 0, y: 0, z: 0}
   ResultForce: {x: 0, y: 0, z: 0}
+  windTorqueSum: {x: 0, y: 0, z: 0}
+  oldWindForce: {x: 0, y: 0, z: 0}
+  oldWindTorque: {x: 0, y: 0, z: 0}
   XArea: 0
   YArea: 0
+  FX: 0
+  FY: 0
+  FXOld: 0
+  FYOld: 0
+  Phi: 0
 --- !u!4 &1188651674
 Transform:
   m_ObjectHideFlags: 0

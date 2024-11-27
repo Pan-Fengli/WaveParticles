@@ -106,6 +106,11 @@ public class BuoyancySystem : SystemBase
     private bool applyWind = false;
     private float XArea = 0.0f;
     private float YArea = 0.0f;
+    private float FX = 0.0f;
+    private float FY = 0.0f;
+    private float FXOld = 0.0f;
+    private float FYOld = 0.0f;
+    private float Phi = 0.0f;
     //-------------------------------------------------------------
     protected override void OnStartRunning()
     {
@@ -208,6 +213,7 @@ public class BuoyancySystem : SystemBase
         StreamWriter sw2 = new StreamWriter(@"D:\StudyAndWork\研二\南湖\水体模拟\看代码\WaveParticles\Assets\Scripts\Log\Boat\风载荷系数CY.txt");
         StreamWriter sw3 = new StreamWriter(@"D:\StudyAndWork\研二\南湖\水体模拟\看代码\WaveParticles\Assets\Scripts\Log\Boat\风载荷系数CN.txt");
         StreamWriter sw4 = new StreamWriter(@"D:\StudyAndWork\研二\南湖\水体模拟\看代码\WaveParticles\Assets\Scripts\Log\Boat\风载荷系数CK.txt");
+        StreamWriter sw5 = new StreamWriter(@"D:\StudyAndWork\研二\南湖\水体模拟\看代码\WaveParticles\Assets\Scripts\Log\Boat\UZ.txt");
 
         for (int i = 0; i <= 180; i++)
         {
@@ -216,6 +222,7 @@ public class BuoyancySystem : SystemBase
             float cy = GetCy(phi);
             float cN = GetCn(phi);
             float cK = GetCk(phi);
+            
             sw1.Write(cx);
             sw1.Write("\n");
             sw2.Write(cy);
@@ -224,11 +231,21 @@ public class BuoyancySystem : SystemBase
             sw3.Write("\n");
             sw4.Write(cK);
             sw4.Write("\n");
+            
         }
         sw1.Close();
         sw2.Close();
         sw3.Close();
         sw4.Close();
+
+        for (int i = 0; i <= 100; ++i)
+        {
+            Vector3 pos = new Vector3(0.0f, i * 0.2f, 0.0f);
+            Vector3 UZ = GetWindAtPosition(pos);
+            sw5.Write(UZ.x);
+            sw5.Write("\n");
+        }
+        sw5.Close();
     }
 
     protected override void OnUpdate()
@@ -260,6 +277,11 @@ public class BuoyancySystem : SystemBase
 
         XArea = 0;
         YArea = 0;
+        FX = 0;
+        FY = 0;
+        FXOld = 0;
+        FYOld = 0;
+        Phi = 0;
         Entities.WithAll<Tag_Player>().ForEach((
             ref Translation translation, 
             ref Rotation rotation, 
@@ -327,6 +349,11 @@ public class BuoyancySystem : SystemBase
             //Debug.Log("YArea:" + YArea);//横向受风面积
             ResourceLocatorService.Instance.XArea = XArea;
             ResourceLocatorService.Instance.YArea = YArea;
+            ResourceLocatorService.Instance.FX = FX;
+            ResourceLocatorService.Instance.FY = FY;
+            ResourceLocatorService.Instance.FXOld = FXOld;
+            ResourceLocatorService.Instance.FYOld = FYOld;
+            ResourceLocatorService.Instance.Phi = Phi;
 
             //计算重力
             GravityForce = Physics.gravity / physicsMass.InverseMass;
@@ -463,6 +490,14 @@ public class BuoyancySystem : SystemBase
             }
 
         }
+        //老方法算力和力矩
+        Vector3 shipWindSpeed = GetWindAtPosition(new Vector3(worldCoM.x, 0.534f, worldCoM.z));
+        Vector3 oldWindForce=new Vector3();
+        Vector3 oldWindTorque = new Vector3();
+        CalculateOriginalWindForce(shipWindSpeed, ref oldWindForce, ref oldWindTorque);
+        ResourceLocatorService.Instance.oldWindForce = oldWindForce;
+        ResourceLocatorService.Instance.oldWindTorque = oldWindTorque;
+        //
 
         ResultForce.x = forceSum.x * finalForceCoefficient;
         ResultForce.y = forceSum.y * finalForceCoefficient;
@@ -487,7 +522,7 @@ public class BuoyancySystem : SystemBase
         {
             ResultTorque += windTorqueSum;
         }
-        
+        ResourceLocatorService.Instance.windTorqueSum = windTorqueSum;
         //Debug.Log("windTorqueSum" + windTorqueSum);
         //Debug.Log("ResultTorque" + ResultTorque);
     }
@@ -732,15 +767,25 @@ public class BuoyancySystem : SystemBase
         yDir = new Vector3(yDir.x, 0, yDir.z);
         yDir = Vector3.Normalize(yDir);
 
-        float cosAlpha = Vector3.Dot(normal, -xDir);//往负方向投影是正的，才说明受风
+        float cosAlpha = Vector3.Dot(normal, -xDir);
+        //投影应该是受风那面的投影，
+/*        if (Vector3.Dot(xDir, UA) < 0)
+        {
+            cosAlpha = Vector3.Dot(normal, xDir);
+        }*/
         float Sx = area * cosAlpha;
+        Sx = math.abs(Sx);
         if (Sx > 0)
             XArea += math.abs(Sx);
         float cosBeta = Vector3.Dot(normal, -yDir);
+/*        if (Vector3.Dot(yDir, UA) < 0)
+        {
+            cosBeta = Vector3.Dot(normal, yDir);
+        }*/
         float Sy = area * cosBeta;
         if (Sy > 0)
             YArea += math.abs(Sy);
-
+        Sy = math.abs(Sy);
         float gama = Vector3.Dot(normal, UA);
         if (gama >= 0)
         {
@@ -762,17 +807,23 @@ public class BuoyancySystem : SystemBase
         {
             Fy = -Fy;
         }
+/*        if (Vector3.Dot(xDir, UA) < 0)
+        {
+            Fx = -Fx;
+        }*/
+        FX += Fx;
+        FY += Fy;
         //船舶的纵横和世界坐标下的不一样...只要前面x和yDir改好了就可以了
         windForce.x = Fx * xDir.x + Fy * yDir.x;
         windForce.z = Fx * xDir.z + Fy * yDir.z;
-        Debug.Log("windForce:" + windForce);
+/*        Debug.Log("windForce:" + windForce);
         Debug.Log("phi:" + phi);
         Debug.Log("Fx:" + Fx);
         Debug.Log("Fy:" + Fy);
         Debug.Log("xDir:" + xDir);
         Debug.Log("yDir:" + yDir);
         Debug.Log("Cy:" + Cy);
-        Debug.Log("UA:" + UA);
+        Debug.Log("UA:" + UA);*/
 
         //实际世界坐标系下的横向其实是z，y是重力方向
     }
@@ -792,6 +843,7 @@ public class BuoyancySystem : SystemBase
         yDir = Vector3.Normalize(yDir);
 
         float phi = math.abs(Vector3.Angle(xDir, -UA)) * math.PI / 180.0f;//度为单位,转化为弧度
+        Phi = Vector3.Angle(xDir, -UA);
         //x方向载荷系数
         float Cx = GetCx(phi);
         //Debug.Log("Cx"+Cx);
@@ -808,7 +860,8 @@ public class BuoyancySystem : SystemBase
             Fy = -Fy;
             YForce = -1.0f;
         }
-
+        FXOld += Fx;
+        FYOld += Fy;
         //船舶的纵横和世界坐标下的不一样...只要前面x和yDir改好了就可以了
         windForce.x = Fx * xDir.x + Fy * yDir.x;
         windForce.z = Fx * xDir.z + Fy * yDir.z;
@@ -816,10 +869,11 @@ public class BuoyancySystem : SystemBase
         //windTorque
         float Cn = GetCn(phi);
         float Ck = GetCk(phi);
-        float Mk = YForce * 0.5f * Ck * airDensity * UA.magnitude * UA.magnitude * AL * AL * LOA;//横摇
-        float Mn = YForce * 0.5f * Cn * airDensity * UA.magnitude * UA.magnitude * AL * AL * LOA;//艏摇
+        float Mk = YForce * 0.5f * Ck * airDensity * UA.magnitude * UA.magnitude  * AL * LOA;//横摇
+        float Mn = YForce * 0.5f * Cn * airDensity * UA.magnitude * UA.magnitude  * AL * LOA;//艏摇
 
-
+        windTorque.y = Mn;
+        windTorque.z = Mk;
     }
 
     private void CalculateForces(in Vector3 p0, in Vector3 p1, in Vector3 p2,
