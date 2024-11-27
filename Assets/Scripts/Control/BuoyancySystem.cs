@@ -9,6 +9,7 @@ using Unity.Transforms;
 using UnityEngine;
 using Unity.Physics.Extensions;
 using UnityEditor;
+using System.IO;
 
 [UpdateBefore(typeof(WaveSubdivideSystem))]
 public class BuoyancySystem : SystemBase
@@ -200,7 +201,23 @@ public class BuoyancySystem : SystemBase
         CLF2 = b20 + b21 * B / LOA + b22 * HC / LOA + b23 * AOD / (LOA * LOA) + b24 * AF / (B * B);
 
         CYM1 = gama10 + gama11 * AF / (LOA * B);
-        CYM2 = gama20 + gama21 * AOD / (LOA * LOA); 
+        CYM2 = gama20 + gama21 * AOD / (LOA * LOA);
+
+        //Debug:把0~180°的风载荷的结果输出
+        StreamWriter sw1 = new StreamWriter(@"D:\StudyAndWork\研二\南湖\水体模拟\看代码\WaveParticles\Assets\Scripts\Log\Boat\风载荷系数CX.txt");
+        StreamWriter sw2 = new StreamWriter(@"D:\StudyAndWork\研二\南湖\水体模拟\看代码\WaveParticles\Assets\Scripts\Log\Boat\风载荷系数CY.txt");
+        for (int i = 0; i <= 180; i++)
+        {
+            float phi = (float)i / 180.0f * math.PI;
+            float cx = GetCx(phi);
+            float cy = GetCy(phi);
+            sw1.Write(cx);
+            sw1.Write("\n");
+            sw2.Write(cy);
+            sw2.Write("\n");
+        }
+        sw1.Close();
+        sw2.Close();
     }
 
     protected override void OnUpdate()
@@ -498,7 +515,9 @@ public class BuoyancySystem : SystemBase
             ResultStates[i] = 2;
             //TODO,计算风力
             //获取当前位置的风向风速，传入进去
-            Vector3 windSpeed = GetWindAtPosition(new float3(P0.x, P0.y, P0.z));
+            Vector3 Center=(P0 + P1 + P2)/ 3.0f;
+            Center.y = (d0 + d1 + d2) / 3.0f;
+            Vector3 windSpeed = GetWindAtPosition(Center);
             CalculateWindForces(P0, P1, P2,i,
             windSpeed,
             ref WindForces[i], ref ResultCenters[i],
@@ -711,14 +730,14 @@ public class BuoyancySystem : SystemBase
         if (Sy > 0)
             YArea += math.abs(Sy);
 
-        float gama = Vector3.Dot(normal, windSpeed);
+        float gama = Vector3.Dot(normal, UA);
         if (gama >= 0)
         {
             return;//只保留迎风的那面
         }
 
         //风向角,windDir和xdir的夹角
-        float phi = Vector3.Angle(windSpeed, xDir) * 180.0f / math.PI;//度为单位,转化为弧度
+        float phi = math.abs(Vector3.Angle(xDir, -UA)) * math.PI / 180.0f;//度为单位,转化为弧度
         //x方向载荷系数
         float Cx = GetCx(phi);
         //Debug.Log("Cx"+Cx);
@@ -728,11 +747,57 @@ public class BuoyancySystem : SystemBase
 
         float Fx = -0.5f * Cx * airDensity * UA.magnitude * UA.magnitude * Sx;//纵向力//乘-1，是因为风的方向和法线是反向
         float Fy = -0.5f * Cy * airDensity * UA.magnitude * UA.magnitude * Sy;//横向力
+        if (Vector3.Angle(xDir, -UA) < 0)
+        {
+            Fy = -Fy;
+        }
         //船舶的纵横和世界坐标下的不一样...只要前面x和yDir改好了就可以了
         windForce.x = Fx * xDir.x + Fy * yDir.x;
         windForce.z = Fx * xDir.z + Fy * yDir.z;
+/*        Debug.Log("windForce:" + windForce);
+        Debug.Log("phi:" + phi);
+        Debug.Log("Angle:" + Vector3.Angle(xDir, -windSpeed));
+        Debug.Log("xDir:" + xDir);
+        Debug.Log("windSpeed:" + windSpeed);*/
 
         //实际世界坐标系下的横向其实是z，y是重力方向
+    }
+    private void CalculateOriginalWindForce(in Vector3 windSpeed, ref Vector3 windForce, ref Vector3 windTorque)
+    {
+        //相对风速
+        Vector3 velocity = RigidbodyLinearVel;
+        Vector3 UA = windSpeed - velocity;
+        //船舶的纵向x方向向量
+        Vector3 xDir = -RigidbodyYDir;//TODO:实际是-y方向
+        //实际应该只取水平的分量，然后单位化
+        xDir = new Vector3(xDir.x, 0, xDir.z);
+        xDir = Vector3.Normalize(xDir);
+        //船舶的横向y方向向量
+        Vector3 yDir = RigidbodyXDir;//实际是x方向
+        yDir = new Vector3(yDir.x, 0, yDir.z);
+        yDir = Vector3.Normalize(yDir);
+
+        float phi = math.abs(Vector3.Angle(xDir, -UA)) * math.PI / 180.0f;//度为单位,转化为弧度
+        //x方向载荷系数
+        float Cx = GetCx(phi);
+        //Debug.Log("Cx"+Cx);
+        //y方向载荷系数
+        float Cy = GetCy(phi);
+        //Debug.Log("Cy" + Cy);
+
+        float Fx = 0.5f * Cx * airDensity * UA.magnitude * UA.magnitude * AF;//纵向力//乘-1，是因为风的方向和法线是反向
+        float Fy = 0.5f * Cy * airDensity * UA.magnitude * UA.magnitude * AL;//横向力
+        //横向力的方向和相对风向有关
+        if (Vector3.Angle(xDir, -UA) < 0)
+        {
+            Fy = -Fy;
+        }
+
+        //船舶的纵横和世界坐标下的不一样...只要前面x和yDir改好了就可以了
+        windForce.x = Fx * xDir.x + Fy * yDir.x;
+        windForce.z = Fx * xDir.z + Fy * yDir.z;
+        
+        //windTorque
     }
 
     private void CalculateForces(in Vector3 p0, in Vector3 p1, in Vector3 p2,
@@ -1266,8 +1331,14 @@ public class BuoyancySystem : SystemBase
 
         float U10 = constantWind + pulseWind;
         //Debug.Log("U10"+ U10);
-        float Uz = U10 * math.pow(position.y / 10.0f, 0.125f);//y是高度
-        //Debug.Log("Uz" + Uz);
+        //float waterHeright = GetWaterHeightAtPosition(position);
+        float Height = position.y;//距离海面的高度
+        if(Height<0)
+            return windSpeed;
+        float Uz = U10 * math.pow(Height / 10.0f, 0.125f);//y是高度
+        //Debug.Log("Uz:" + Uz);
+        //Debug.Log("position.y:" + position.y);
+        //Debug.Log("Height" + Height);
         windSpeed = windDir * Uz;
 
         return windSpeed;
@@ -1347,23 +1418,23 @@ public class BuoyancySystem : SystemBase
     float CXLI2 = 0.0f;
     float CALF1 = 0.0f;
     float CALF2 = 0.0f;
-    private float GetCx(float phi)//根据风向角phi计算x方向的风载荷系数
+    public float GetCx(float phi)//根据风向角phi计算x方向的风载荷系数
     {
         float CLF = 0.0f;//主流阻力
-        CLF1 = b10 + b11 * AL / (LOA * B) + b12 * C /LOA ;
-        CLF2 = b20 + b21 * B / LOA + b22 * HC / LOA + b23 * AOD / (LOA * LOA) + b24 * AF / (B * B);
-        if (phi <= math.PI / 2)
+        CLF1 = b10 + b11 * AL / (LOA * B) + b12 * C /LOA ;//0°的时候
+        CLF2 = b20 + b21 * B / LOA + b22 * HC / LOA + b23 * AOD / (LOA * LOA) + b24 * AF / (B * B);//180°的时候
+        if (phi <= (math.PI / 2))
         {
             CLF = CLF1 * math.cos(phi);
         }
         else {
-            CLF = -CLF2 * math.cos(phi);
+            CLF = CLF2 * math.cos(phi);
         }
        
         float CXLI = 0.0f;
         CXLI1 = delta10 + delta11 * AL / (LOA * HBR) + delta12 * AF / (B * HBR);
         CXLI2 = delta20 + delta21 * AL / (LOA * HBR) + delta22 * AF / AL + delta23 * B / LOA + delta24 * AF / (B * HBR);
-        if (phi <= math.PI / 2)
+        if (phi <= (math.PI / 2))
         {
             CXLI = CXLI1;
         }
@@ -1375,13 +1446,13 @@ public class BuoyancySystem : SystemBase
         float CALF = 0.0f;
         CALF1 = ep10 + ep11 * AOD / AL + ep12 * B / LOA;
         CALF2 = ep20 + ep21 * AOD / AL;
-        if (phi <= math.PI / 2)
+        if (phi <= (math.PI / 2))
         {
             CALF = CALF1;
         }
         else
         {
-            CALF = CXLI2;
+            CALF = CALF2;
         }
         float CX = CLF + CXLI * (math.sin(phi)
             - 0.5f * math.sin(phi) * math.cos(phi) * math.cos(phi)) * math.sin(phi) * math.cos(phi)
@@ -1389,7 +1460,7 @@ public class BuoyancySystem : SystemBase
 
         return CX;
     }
-    private float GetCy(float phi)
+    public float GetCy(float phi)
     {
         //根据风向角phi计算y方向的风载荷系数
 
@@ -1437,4 +1508,6 @@ public class BuoyancySystem : SystemBase
         }
         return CK;
     }
+
+
 }

@@ -1276,7 +1276,7 @@ MonoBehaviour:
   TestMode: 0
   MaxDepth: 0.5
   MinDepth: 0.01
-  Hs: 3
+  Hs: 5
   Tp: 10
   A: 0.02
 --- !u!4 &482783143
@@ -2944,19 +2944,19 @@ MonoBehaviour:
   m_GravityFactor: 0
   m_OverrideDefaultMassDistribution: 1
   m_CenterOfMass:
-    x: 0
-    y: 0
-    z: 0
+    x: -0.3195721
+    y: 0.6459954
+    z: 0.05543331
   m_Orientation:
     Value:
-      x: 0.7107695
-      y: 0.4491665
-      z: 0.10319
+      x: 0.6670521
+      y: 0.4566906
+      z: 0.1055261
     RotationOrder: 4
   m_InertiaTensor:
-    x: 1249.717
-    y: 247.6765
-    z: 1388.802
+    x: 2961.884
+    y: 586.6857
+    z: 3290.997
   m_CustomTags:
     Tag00: 0
     Tag01: 0
@@ -3027,7 +3027,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 865256834}
-  m_Mesh: {fileID: 4300000, guid: e2ba29a353fa7954cb4690485c18a149, type: 2}
+  m_Mesh: {fileID: 4300000, guid: bda328241b654f24b933549e265c90d4, type: 2}
 --- !u!114 &865256843
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3065,7 +3065,7 @@ MeshCollider:
   serializedVersion: 4
   m_Convex: 1
   m_CookingOptions: -1
-  m_Mesh: {fileID: 4300000, guid: e2ba29a353fa7954cb4690485c18a149, type: 2}
+  m_Mesh: {fileID: 4300000, guid: bda328241b654f24b933549e265c90d4, type: 2}
 --- !u!54 &865256846
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -4043,21 +4043,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_HeightFieldRT: {fileID: 8400000, guid: 06da4165401c1f545985928fd33fb4dc, type: 2}
   m_MainCam: {fileID: 963194227}
-  N: 25
-  M: 25
+  N: 10
+  M: 10
   L: 10
-  COM: {x: 0, y: -0.28, z: -0.85}
-  simulationMesh: {fileID: 4300000, guid: e2ba29a353fa7954cb4690485c18a149, type: 2}
-  WorldCOM: {x: -0.76, y: -0.70000017, z: -1.0099999}
-  LOA: 4.91
-  B: 2.06
-  AF: 1.5346
-  AL: 2.6183
-  C: 0.5445
-  HC: 0.3174
+  COM: {x: -0.3195721, y: 0.6459954, z: -0.85}
+  simulationMesh: {fileID: 4300000, guid: bda328241b654f24b933549e265c90d4, type: 2}
+  WorldCOM: {x: -1.0795721, y: -0.70000017, z: -1.9359953}
+  LOA: 8.319995
+  B: 3.49067
+  AF: 3.29488
+  AL: 7.53462
+  C: 0.922655
+  HC: 0.537834
   AOD: 0
-  HBR: 0.987
-  applyWind: 0
+  HBR: 1.67247
+  applyWind: 1
   WaterForce: {x: 0, y: 0, z: 0}
   WindForce: {x: 0, y: 0, z: 0}
   ResultForce: {x: 0, y: 0, z: 0}
@@ -6279,7 +6279,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1913677096521706869
 MonoBehaviour:
   m_ObjectHideFlags: 0
