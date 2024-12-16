@@ -17,6 +17,8 @@ public class BoatDebugging : MonoBehaviour
     ExcelPackage package;
     ExcelWorksheet worksheet;
     ExcelWorksheet worksheet2;
+    ExcelWorksheet worksheet3;
+    ExcelWorksheet worksheet4;
     private Text m_Text;
     private float timer = 0f;
     private float time = 0f;
@@ -26,6 +28,10 @@ public class BoatDebugging : MonoBehaviour
     private float YArea = 0f;
     private float FX = 0f;
     private float FY = 0f;
+    private float FXOld = 0f;
+    private float FYOld = 0f;
+    private float posx = 0f;
+    private float posz = 0f;
     // Start is called before the first frame update
     void Load()
     {
@@ -45,21 +51,22 @@ public class BoatDebugging : MonoBehaviour
         ExcelFile = new FileInfo(excel_path);
         package = new ExcelPackage(ExcelFile);
         worksheet = package.Workbook.Worksheets.Add(DateTime.Now.ToString("MM-dd HH:mm:ss"));
-        worksheet2 = package.Workbook.Worksheets.Add(DateTime.Now.ToString("Force"));
+        worksheet2 = package.Workbook.Worksheets.Add("force");
+        worksheet3 = package.Workbook.Worksheets.Add("oldforce");
+        worksheet4 = package.Workbook.Worksheets.Add("position");
 
         m_Text = TextUI.GetComponent<Text>();
     }
     void Start()
     {
-        Load();
+        //Load();
     }
 
     // Update is called once per frame
     void Update()
     {
 
-        updateArea();
-
+        //updateArea();
 
     }
     private void updateForce()
@@ -90,6 +97,10 @@ public class BoatDebugging : MonoBehaviour
         YArea = ResourceLocatorService.Instance.YArea;
         FX = ResourceLocatorService.Instance.FX;
         FY = ResourceLocatorService.Instance.FY;
+        FXOld = ResourceLocatorService.Instance.FXOld;
+        FYOld = ResourceLocatorService.Instance.FYOld;
+        posx = ResourceLocatorService.Instance.WorldCOM.x;
+        posz = ResourceLocatorService.Instance.WorldCOM.z;
         //定时向log里面写入
         //Debug.Log("label"+label);
         timer += Time.deltaTime;
@@ -109,13 +120,21 @@ public class BoatDebugging : MonoBehaviour
             worksheet2.Cells[row_index, 2].Value = FX;
             worksheet2.Cells[row_index, 3].Value = FY;
 
+            worksheet3.Cells[row_index, 1].Value = time;
+            worksheet3.Cells[row_index, 2].Value = FXOld;
+            worksheet3.Cells[row_index, 3].Value = FYOld;
+
+            worksheet4.Cells[row_index, 1].Value = time;
+            worksheet4.Cells[row_index, 2].Value = posx;
+            worksheet4.Cells[row_index, 3].Value = posz;
+
             m_Text.text = time.ToString();
         }
     }
     private void OnDestroy()
     {
         //关闭应用程序
-        package.Save();
+        //package.Save();
         Debug.Log("导出Excel成功");
     }
 }

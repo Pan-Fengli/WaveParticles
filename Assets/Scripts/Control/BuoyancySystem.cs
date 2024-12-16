@@ -111,6 +111,8 @@ public class BuoyancySystem : SystemBase
     private float FXOld = 0.0f;
     private float FYOld = 0.0f;
     private float Phi = 0.0f;
+
+    private float constantWind = 0.0f;
     //-------------------------------------------------------------
     protected override void OnStartRunning()
     {
@@ -201,6 +203,8 @@ public class BuoyancySystem : SystemBase
         HBR = ResourceLocatorService.Instance.HBR;//最上层建筑物到水面的距离——测不出来，默认是船舶高度
 
         applyWind = ResourceLocatorService.Instance.applyWind;
+
+        constantWind = SpectrumService.Instance.windSpeed;
 
         CLF1 = b10 + b11 * AL / (LOA * B) + b12 * C / LOA;
         CLF2 = b20 + b21 * B / LOA + b22 * HC / LOA + b23 * AOD / (LOA * LOA) + b24 * AF / (B * B);
@@ -490,14 +494,14 @@ public class BuoyancySystem : SystemBase
             }
 
         }
-        //老方法算力和力矩
+        /*老方法算力和力矩
         Vector3 shipWindSpeed = GetWindAtPosition(new Vector3(worldCoM.x, 0.534f, worldCoM.z));
         Vector3 oldWindForce=new Vector3();
         Vector3 oldWindTorque = new Vector3();
         CalculateOriginalWindForce(shipWindSpeed, ref oldWindForce, ref oldWindTorque);
         ResourceLocatorService.Instance.oldWindForce = oldWindForce;
         ResourceLocatorService.Instance.oldWindTorque = oldWindTorque;
-        //
+        */
 
         ResultForce.x = forceSum.x * finalForceCoefficient;
         ResultForce.y = forceSum.y * finalForceCoefficient;
@@ -507,6 +511,7 @@ public class BuoyancySystem : SystemBase
         if (applyWind)
         {
             ResultForce += windForceSum;
+            //ResultForce += oldWindForce;
         }
 
         ResourceLocatorService.Instance.WindForce = windForceSum;
@@ -521,6 +526,7 @@ public class BuoyancySystem : SystemBase
         if (applyWind)
         {
             ResultTorque += windTorqueSum;
+            //ResultTorque += oldWindTorque;
         }
         ResourceLocatorService.Instance.windTorqueSum = windTorqueSum;
         //Debug.Log("windTorqueSum" + windTorqueSum);
@@ -854,6 +860,8 @@ public class BuoyancySystem : SystemBase
         float Fx = 0.5f * Cx * airDensity * UA.magnitude * UA.magnitude * AF;//纵向力//乘-1，是因为风的方向和法线是反向
         float Fy = 0.5f * Cy * airDensity * UA.magnitude * UA.magnitude * AL;//横向力
         //横向力的方向和相对风向有关
+        //Debug.Log("UA.magnitude:" + UA.magnitude);
+        //Debug.Log("Cx" + Cx);
         float YForce = 1.0f;
         if (Vector3.Dot(yDir, UA) < 0)
         {
@@ -1401,16 +1409,17 @@ public class BuoyancySystem : SystemBase
         Vector3 windDir = new Vector3(1.0f, 0.0f, 0.0f);//风向可能用一个函数来代替
 
         //风速=定常风+脉动风
-        float constantWind = 5.0f;//定常风可能用一个函数来代替
+        //float constantWind = 5.0f;//定常风可能用一个函数来代替
 
         float pulseWind = Davenport(constantWind);
+        //pulseWind = 0;
 
         float U10 = constantWind + pulseWind;
         //Debug.Log("U10"+ U10);
         //float waterHeright = GetWaterHeightAtPosition(position);
         float Height = position.y;//距离海面的高度
         if(Height<0)
-            return windSpeed;
+            return constantWind * windDir;
         float Uz = U10 * math.pow(Height / 10.0f, 0.125f);//y是高度
         //Debug.Log("Uz:" + Uz);
         //Debug.Log("position.y:" + position.y);
