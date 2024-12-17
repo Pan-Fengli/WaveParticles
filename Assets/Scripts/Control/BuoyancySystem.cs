@@ -146,6 +146,7 @@ public class BuoyancySystem : SystemBase
             vertexCount = LocalVertices.Length;
             Debug.Log("Vertex" + vertexCount);
             triangleCount = TriIndices.Length / 3;
+            Debug.Log("Triangle" + triangleCount);
             /*for (int i = 0; i < LocalVertices.Length; i++)
             {
                 Vector3 vertex = LocalVertices[i];
@@ -214,6 +215,7 @@ public class BuoyancySystem : SystemBase
         CYM2 = gama20 + gama21 * AOD / (LOA * LOA);
 
         //Debug:把0~180°的风载荷的结果输出
+        /*
         StreamWriter sw1 = new StreamWriter(@"D:\StudyAndWork\研二\南湖\水体模拟\看代码\WaveParticles\Assets\Scripts\Log\Boat\风载荷系数CX.txt");
         StreamWriter sw2 = new StreamWriter(@"D:\StudyAndWork\研二\南湖\水体模拟\看代码\WaveParticles\Assets\Scripts\Log\Boat\风载荷系数CY.txt");
         StreamWriter sw3 = new StreamWriter(@"D:\StudyAndWork\研二\南湖\水体模拟\看代码\WaveParticles\Assets\Scripts\Log\Boat\风载荷系数CN.txt");
@@ -251,6 +253,7 @@ public class BuoyancySystem : SystemBase
             sw5.Write("\n");
         }
         sw5.Close();
+        */
     }
 
     protected override void OnUpdate()
@@ -419,6 +422,7 @@ public class BuoyancySystem : SystemBase
         {
             CalcTri(i);
         }
+        
 
         // Calculate result force and torque
         Vector3 forceSum;
@@ -495,6 +499,10 @@ public class BuoyancySystem : SystemBase
                 windTorqueSum.x += crossDirForce.x;
                 windTorqueSum.y += crossDirForce.y;
                 windTorqueSum.z += crossDirForce.z;
+/*                Debug.Log("i:" + i);
+                Debug.Log("WindForces[i]:" + WindForces[i]);
+                Debug.Log("resultCenter:" + resultCenter);
+                Debug.Log("crossDirForce" + crossDirForce);*/
             }
 
         }
@@ -564,7 +572,6 @@ public class BuoyancySystem : SystemBase
         float d1 = P1.y - wh_P1;
         float d2 = P2.y - wh_P2;
 
-
         //All vertices are above water//三个点都在水上
         if (d0 >= 0 && d1 >= 0 && d2 >= 0)
         {
@@ -589,6 +596,7 @@ public class BuoyancySystem : SystemBase
         // 1 or 2 vertices are below the water
         else
         {
+            ResultStates[i] = 1;
             // v0 > v1
             if (d0 > d1)
             {
@@ -725,7 +733,7 @@ public class BuoyancySystem : SystemBase
         float crossMagnitude = crossUV.x * crossUV.x + crossUV.y * crossUV.y + crossUV.z * crossUV.z;
         if (crossMagnitude < 1e-8f)//为了避免下面倒数过大
         {
-            ResultStates[index] = 2;//标记为在水面上
+            ResultStates[index] = 3;//
             return;
         }
 
@@ -926,7 +934,7 @@ public class BuoyancySystem : SystemBase
         float crossMagnitude = crossUV.x * crossUV.x + crossUV.y * crossUV.y + crossUV.z * crossUV.z;
         if (crossMagnitude < 1e-8f)//为了避免下面倒数过大
         {
-            ResultStates[index] = 2;//标记为在水面上
+            ResultStates[index] = 3;//标记为在水面上//12.17改成3，不然风力计算要出问题
             return;
         }
 

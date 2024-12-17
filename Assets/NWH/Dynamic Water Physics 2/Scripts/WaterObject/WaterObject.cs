@@ -136,7 +136,7 @@ namespace NWH.DWP2.WaterObjects
         ///     Original mesh will be decimated to this number of triangles is "SimplifyMesh" is enabled.
         ///     Otherwise does nothing.
         /// </summary>
-        [FormerlySerializedAs("targetTris")] [Range(8, 256)]
+        [FormerlySerializedAs("targetTris")] [Range(8, 4096)]
         public int targetTriangleCount = 64;
 
 	    /// <summary>
