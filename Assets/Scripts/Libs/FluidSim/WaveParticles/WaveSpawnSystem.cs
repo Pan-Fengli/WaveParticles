@@ -231,8 +231,8 @@ namespace OneBitLab.FluidSim
             //需要处理dirx=0的特殊情况
             if (dir.x == 0)
             {
-                Debug.Log("dirx==0");
-                Debug.Log("dir.y:"+ dir.y);
+                /*Debug.Log("dirx==0");
+                Debug.Log("dir.y:"+ dir.y);*/
                 for (int i = 0; i < 400; i++) //200其实这里就包含了rmin是10/200=0.05
                 {
                     //Entity entity = EntityManager.CreateEntity(m_Archetype);

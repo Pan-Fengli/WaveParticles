@@ -89,13 +89,13 @@ namespace OneBitLab.FluidSim
             int pLength=pixData.Length;
             NativeArray<int> counts = new NativeArray<int>(sample_count, Allocator.TempJob);
             // NativeArray<float> pixDatas= new NativeArray<float>(pLength*sample_count, Allocator.TempJob);//
-            Dictionary<int,NativeArray<float>> pixDatas2=new Dictionary<int,NativeArray<float>>();
+            //Dictionary<int,NativeArray<float>> pixDatas2=new Dictionary<int,NativeArray<float>>();
             //NativeArray<float>[] pixDatas3 = new NativeArray<float>[sample_count];
             //void* ptr = NativeArrayUnsafeUtility.GetUnsafePtr(counts);
             NativeArray<Player> pixDatas4 = new NativeArray<Player>(sample_count, Allocator.TempJob);
+            NativeArray<float> TmpPixData = new NativeArray<float>(pLength, Allocator.Temp);
             for (int i=0;i<sample_count;i++)
             {
-                NativeArray<float> TmpPixData = new NativeArray<float>(pLength,Allocator.Temp);
                 TmpPixData = m_HeightFieldTexes[i].GetRawTextureData<float>();
                 // for (int j = 0; j < pLength; ++j)
                 // {
@@ -115,6 +115,7 @@ namespace OneBitLab.FluidSim
                 p.ptr = NativeArrayUnsafeUtility.GetUnsafePtr(TmpPixData);
                 pixDatas4[i] = p;
             }
+            TmpPixData.Dispose();
             int Asample_count=sample_count;
             float Asample_interval=sample_interval;
             // Clear texture color to black//初始化为0，每个时刻一开始都要初始化成0
@@ -282,7 +283,7 @@ namespace OneBitLab.FluidSim
                 m_FilterMat.SetFloat( "_WaveParticleRadius", RR);
                 //float Scale = (sample_count - i+2) * scale / sample_count;
                 Scale = 0.5f - 0.1f * RR;
-                Scale = 0.0f;
+                //Scale = 0.0f;
                 m_FilterMat.SetFloat( "_DeltaScale", Scale);
                 // 半径越小(i越小)，delta越大
                 Graphics.Blit( m_HeightFieldTexes[i], m_TmpHeightFieldRT, m_FilterMat, pass: 0 );
@@ -301,6 +302,7 @@ namespace OneBitLab.FluidSim
             pixData.Dispose();
             pixData1.Dispose();
             pixDatas4.Dispose();
+           
             // pixDatas.Dispose();//需要dispose
         }
 
