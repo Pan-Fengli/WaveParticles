@@ -69,6 +69,7 @@ public class BuoyancySystem : SystemBase
     private quaternion RigidbodyRotation;
     private Vector3 RigidbodyXDir = new Vector3(0, 0, 0);
     private Vector3 RigidbodyYDir = new Vector3(0, 0, 0);
+    private Vector3 RigidbodyZDir = new Vector3(0, 0, 0);
     private Vector3[] ResultCenters;//Result triangle centers in world coordinates.
     private float[] ResultAreas;//Result triangle areas.
     private float[] ResultDistances;//Result distances to water surface.（转化成distanceToSurface）
@@ -334,6 +335,9 @@ public class BuoyancySystem : SystemBase
             rot.SetTRS(new Vector3(0, 0, 0), RigidbodyRotation, new Vector3(1, 1, 1));
             RigidbodyXDir = new Vector3(rot[0, 0], rot[1, 0], rot[2, 0]);
             RigidbodyYDir = new Vector3(rot[0, 1], rot[1, 1], rot[2, 1]);
+            RigidbodyZDir = new Vector3(rot[0, 2], rot[1, 2], rot[2, 2]);
+            ResourceLocatorService.Instance.XDir = RigidbodyXDir;
+            ResourceLocatorService.Instance.ZDir = RigidbodyZDir;
             //Debug.Log("RigidbodyXDir:" + RigidbodyXDir);
             //Debug.Log("RigidbodyYDir:" + RigidbodyYDir);
 
@@ -877,11 +881,14 @@ public class BuoyancySystem : SystemBase
         //windTorque
         float Cn = GetCn(phi);
         float Ck = GetCk(phi);
-        float Mk = YForce * 0.5f * Ck * airDensity * UA.magnitude * UA.magnitude  * AL * LOA;//横摇
-        float Mn = YForce * 0.5f * Cn * airDensity * UA.magnitude * UA.magnitude  * AL * LOA;//艏摇
+        float Mk = YForce * 0.5f * Ck * airDensity * UA.magnitude * UA.magnitude  * AL * AL / LOA;//横摇，-x方向
+        float Mn = YForce * 0.5f * Cn * airDensity * UA.magnitude * UA.magnitude  * AL * LOA;//艏摇,z方向
 
-        windTorque.y = Mn;
-        windTorque.z = Mk;
+        Vector3 zDir = RigidbodyZDir;
+        zDir = Vector3.Normalize(zDir);
+        windTorque.x = Mn * zDir.x - Mk * xDir.x;
+        windTorque.y = Mn * zDir.y - Mk * xDir.y;
+        windTorque.z = Mn * zDir.z - Mk * xDir.z;
     }
 
     private void CalculateForces(in Vector3 p0, in Vector3 p1, in Vector3 p2,

@@ -19,6 +19,8 @@ public class BoatDebugging : MonoBehaviour
     ExcelWorksheet worksheet2;
     ExcelWorksheet worksheet3;
     ExcelWorksheet worksheet4;
+    ExcelWorksheet worksheet5;
+    ExcelWorksheet worksheet6;
     private Text m_Text;
     private float timer = 0f;
     private float time = 0f;
@@ -32,6 +34,14 @@ public class BoatDebugging : MonoBehaviour
     private float FYOld = 0f;
     private float posx = 0f;
     private float posz = 0f;
+
+    private Vector3 ZDir = new Vector3(0, 0, 0);
+    private Vector3 up = new Vector3(0, 1.0f, 0);
+    private float zangle =0f;
+
+    private Vector3 XDir = new Vector3(0, 0, 0);
+    private Vector3 right = new Vector3(1.0f, 0, 0);
+    private float xangle = 0f;
     // Start is called before the first frame update
     void Load()
     {
@@ -54,19 +64,21 @@ public class BoatDebugging : MonoBehaviour
         worksheet2 = package.Workbook.Worksheets.Add("force");
         worksheet3 = package.Workbook.Worksheets.Add("oldforce");
         worksheet4 = package.Workbook.Worksheets.Add("position");
+        worksheet5 = package.Workbook.Worksheets.Add("横摇");//横摇
+        worksheet6 = package.Workbook.Worksheets.Add("艏摇");
 
         m_Text = TextUI.GetComponent<Text>();
     }
     void Start()
     {
-        //Load();
+        Load();
     }
 
     // Update is called once per frame
     void Update()
     {
 
-        //updateArea();
+        updateArea();
 
     }
     private void updateForce()
@@ -101,6 +113,14 @@ public class BoatDebugging : MonoBehaviour
         FYOld = ResourceLocatorService.Instance.FYOld;
         posx = ResourceLocatorService.Instance.WorldCOM.x;
         posz = ResourceLocatorService.Instance.WorldCOM.z;
+
+        ZDir = ResourceLocatorService.Instance.ZDir;
+        //计算角度差
+        zangle = Vector3.SignedAngle(ZDir, Vector3.up, Vector3.forward);
+
+        XDir = ResourceLocatorService.Instance.XDir;
+        //计算角度差
+        xangle = Vector3.SignedAngle(XDir, Vector3.forward, Vector3.up);
         //定时向log里面写入
         //Debug.Log("label"+label);
         timer += Time.deltaTime;
@@ -128,13 +148,19 @@ public class BoatDebugging : MonoBehaviour
             worksheet4.Cells[row_index, 2].Value = posx;
             worksheet4.Cells[row_index, 3].Value = posz;
 
+            worksheet5.Cells[row_index, 1].Value = time;
+            worksheet5.Cells[row_index, 2].Value = zangle;
+
+            worksheet6.Cells[row_index, 1].Value = time;
+            worksheet6.Cells[row_index, 2].Value = xangle;
+
             m_Text.text = time.ToString();
         }
     }
     private void OnDestroy()
     {
         //关闭应用程序
-        //package.Save();
+        package.Save();
         Debug.Log("导出Excel成功");
     }
 }

@@ -1267,12 +1267,12 @@ MonoBehaviour:
   windDir2:
     x: 1
     y: -1
-  windSpeed: 20
+  windSpeed: 30
   windSpeed2: 10
   swellDir:
     x: 0
     y: 0
-  Fetch: 150
+  Fetch: 300
   TestMode: 0
   MaxDepth: 0.5
   MinDepth: 0.01
@@ -2723,7 +2723,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 865256834}
   m_LocalRotation: {x: -0.6830127, y: 0.18301274, z: 0.18301274, w: 0.6830127}
-  m_LocalPosition: {x: -1.7, y: -0.22, z: -2.01}
+  m_LocalPosition: {x: -3.28, y: -0.22, z: -3.8}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 808101883}
@@ -4043,8 +4043,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_HeightFieldRT: {fileID: 8400000, guid: 06da4165401c1f545985928fd33fb4dc, type: 2}
   m_MainCam: {fileID: 963194227}
-  N: 35
-  M: 35
+  N: 25
+  M: 25
   L: 10
   COM: {x: -0.3195721, y: 0.6459954, z: -0.85}
   simulationMesh: {fileID: 4300000, guid: bda328241b654f24b933549e265c90d4, type: 2}
@@ -4071,6 +4071,8 @@ MonoBehaviour:
   FXOld: 0
   FYOld: 0
   Phi: 0
+  ZDir: {x: 0, y: 0, z: 0}
+  XDir: {x: 0, y: 0, z: 0}
 --- !u!4 &1188651674
 Transform:
   m_ObjectHideFlags: 0

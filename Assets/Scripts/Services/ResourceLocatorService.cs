@@ -64,7 +64,10 @@ namespace OneBitLab.Services
         [ReadOnly]
         public float Phi = 0.0f;
 
-
+        [ReadOnly]
+        public Vector3 ZDir = new Vector3(0, 0, 0);
+        [ReadOnly]
+        public Vector3 XDir = new Vector3(0, 0, 0);
     }
 }
 
