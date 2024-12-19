@@ -136,7 +136,7 @@ namespace NWH.DWP2.WaterObjects
         ///     Original mesh will be decimated to this number of triangles is "SimplifyMesh" is enabled.
         ///     Otherwise does nothing.
         /// </summary>
-        [FormerlySerializedAs("targetTris")] [Range(8, 4096)]
+        [FormerlySerializedAs("targetTris")] [Range(8, 8192)]
         public int targetTriangleCount = 64;
 
 	    /// <summary>
@@ -1307,6 +1307,7 @@ namespace NWH.DWP2.WaterObjects
                 if (simplifyMesh)
                 {
                     _simplificationRatio = (targetTriangleCount * 3f + 16) / originalMesh.triangles.Length;
+					Debug.Log(originalMesh.triangles.Length);
                     if (_simplificationRatio >= 1f && !convexifyMesh)
                     {
                         Debug.Log("Target tri count larger than the original tri count. Nothing to simplify.");
