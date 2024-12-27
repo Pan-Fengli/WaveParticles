@@ -34,7 +34,7 @@ public class BuoyancySystem : SystemBase
     public Vector3 defaultWaterNormal = Vector3.up;//World water normal to be used when there is no WaterDataProvider present and calculateWaterNormals is enabled.
     public Vector3 defaultWaterFlow = Vector3.zero;//World water flow to be used when there is no WaterDataProvider present and calculateWaterFlows is enabled.
     public bool calculateWaterHeights = true;
-    public bool calculateWaterNormals = true;
+    public bool calculateWaterNormals = false;
     public bool calculateWaterFlows = false;
     public float fluidDensity = 1030.0f;
     public float airDensity = 1.29f;
@@ -70,6 +70,7 @@ public class BuoyancySystem : SystemBase
     private Vector3 RigidbodyXDir = new Vector3(0, 0, 0);
     private Vector3 RigidbodyYDir = new Vector3(0, 0, 0);
     private Vector3 RigidbodyZDir = new Vector3(0, 0, 0);
+    private Vector3 StandardZDir = new Vector3(0, 0.99354f, -0.011345f);
     private Vector3[] ResultCenters;//Result triangle centers in world coordinates.
     private float[] ResultAreas;//Result triangle areas.
     private float[] ResultDistances;//Result distances to water surface.（转化成distanceToSurface）
@@ -114,6 +115,11 @@ public class BuoyancySystem : SystemBase
     private float Phi = 0.0f;
 
     private float constantWind = 0.0f;
+
+    private bool fixXY = false;
+    private bool constWind = false;
+    private bool oldWind = false;
+
     //-------------------------------------------------------------
     protected override void OnStartRunning()
     {
@@ -204,6 +210,10 @@ public class BuoyancySystem : SystemBase
         AOD = ResourceLocatorService.Instance.AOD;//甲板上物体的侧投影面积——测不出来，默认是0
         HBR = ResourceLocatorService.Instance.HBR;//最上层建筑物到水面的距离——测不出来，默认是船舶高度
 
+        fixXY = ResourceLocatorService.Instance.fixXY;
+        constWind = ResourceLocatorService.Instance.constWind;
+        oldWind = ResourceLocatorService.Instance.oldWind;
+
         applyWind = ResourceLocatorService.Instance.applyWind;
 
         constantWind = SpectrumService.Instance.windSpeed;
@@ -215,7 +225,7 @@ public class BuoyancySystem : SystemBase
         CYM2 = gama20 + gama21 * AOD / (LOA * LOA);
 
         //Debug:把0~180°的风载荷的结果输出
-        /*
+
         StreamWriter sw1 = new StreamWriter(@"D:\StudyAndWork\研二\南湖\水体模拟\看代码\WaveParticles\Assets\Scripts\Log\Boat\风载荷系数CX.txt");
         StreamWriter sw2 = new StreamWriter(@"D:\StudyAndWork\研二\南湖\水体模拟\看代码\WaveParticles\Assets\Scripts\Log\Boat\风载荷系数CY.txt");
         StreamWriter sw3 = new StreamWriter(@"D:\StudyAndWork\研二\南湖\水体模拟\看代码\WaveParticles\Assets\Scripts\Log\Boat\风载荷系数CN.txt");
@@ -229,7 +239,7 @@ public class BuoyancySystem : SystemBase
             float cy = GetCy(phi);
             float cN = GetCn(phi);
             float cK = GetCk(phi);
-            
+
             sw1.Write(cx);
             sw1.Write("\n");
             sw2.Write(cy);
@@ -238,7 +248,7 @@ public class BuoyancySystem : SystemBase
             sw3.Write("\n");
             sw4.Write(cK);
             sw4.Write("\n");
-            
+
         }
         sw1.Close();
         sw2.Close();
@@ -253,7 +263,7 @@ public class BuoyancySystem : SystemBase
             sw5.Write("\n");
         }
         sw5.Close();
-        */
+
     }
 
     protected override void OnUpdate()
@@ -340,9 +350,13 @@ public class BuoyancySystem : SystemBase
             RigidbodyYDir = new Vector3(rot[0, 1], rot[1, 1], rot[2, 1]);
             RigidbodyZDir = new Vector3(rot[0, 2], rot[1, 2], rot[2, 2]);
             ResourceLocatorService.Instance.XDir = RigidbodyXDir;
-            ResourceLocatorService.Instance.ZDir = RigidbodyZDir;
+            /*ResourceLocatorService.Instance.ZDir = RigidbodyZDir;*/
+            ResourceLocatorService.Instance.ZDir = RigidbodyYDir;
             //Debug.Log("RigidbodyXDir:" + RigidbodyXDir);
-            //Debug.Log("RigidbodyYDir:" + RigidbodyYDir);
+            Debug.Log("RigidbodyYDir:" + RigidbodyYDir);
+            /*Debug.Log("Angle:"+Vector3.Angle(RigidbodyYDir, Vector3.up));*/
+            Debug.Log("Angle:" + Vector3.Angle(RigidbodyYDir, StandardZDir));
+            
 
             TickWaterObject(
                 //new Vector3(translation.Value.x, translation.Value.y, translation.Value.z),//重心位置，暂时就是translation的中心位置
@@ -391,7 +405,12 @@ public class BuoyancySystem : SystemBase
             //补充加上重力的冲量
             velocity.ApplyLinearImpulse(physicsMass, GravityForce * time);
             velocity.ApplyAngularImpulse(physicsMass, ResultTorque * time);
-            
+
+            if (fixXY)
+            {
+                velocity.Linear.x = 0;
+                velocity.Linear.z = 0;
+            }
         })
             .WithoutBurst()
             .Run();
@@ -506,14 +525,16 @@ public class BuoyancySystem : SystemBase
             }
 
         }
-        /*老方法算力和力矩
-        Vector3 shipWindSpeed = GetWindAtPosition(new Vector3(worldCoM.x, 0.534f, worldCoM.z));
-        Vector3 oldWindForce=new Vector3();
+        /*老方法算力和力矩*/
+        Vector3 oldWindForce = new Vector3();
         Vector3 oldWindTorque = new Vector3();
-        CalculateOriginalWindForce(shipWindSpeed, ref oldWindForce, ref oldWindTorque);
-        ResourceLocatorService.Instance.oldWindForce = oldWindForce;
-        ResourceLocatorService.Instance.oldWindTorque = oldWindTorque;
-        */
+        if (oldWind)
+        { 
+            Vector3 shipWindSpeed = GetWindAtPosition(new Vector3(worldCoM.x, 0.534f, worldCoM.z));
+            CalculateOriginalWindForce(shipWindSpeed, ref oldWindForce, ref oldWindTorque);
+            ResourceLocatorService.Instance.oldWindForce = oldWindForce;
+            ResourceLocatorService.Instance.oldWindTorque = oldWindTorque;
+        }
 
         ResultForce.x = forceSum.x * finalForceCoefficient;
         ResultForce.y = forceSum.y * finalForceCoefficient;
@@ -522,8 +543,14 @@ public class BuoyancySystem : SystemBase
         ResourceLocatorService.Instance.WaterForce = ResultForce;
         if (applyWind)
         {
-            ResultForce += windForceSum;
-            //ResultForce += oldWindForce;
+
+            if (oldWind)
+            {
+                ResultForce += oldWindForce;
+            }
+            else {
+                ResultForce += windForceSum;
+            }
         }
 
         ResourceLocatorService.Instance.WindForce = windForceSum;
@@ -537,8 +564,13 @@ public class BuoyancySystem : SystemBase
 
         if (applyWind)
         {
-            ResultTorque += windTorqueSum;
-            //ResultTorque += oldWindTorque;
+            if (oldWind)
+            {
+                ResultTorque += oldWindTorque;
+            }
+            else {
+                ResultTorque += windTorqueSum;
+            }
         }
         ResourceLocatorService.Instance.windTorqueSum = windTorqueSum;
         //Debug.Log("windTorqueSum" + windTorqueSum);
@@ -776,12 +808,13 @@ public class BuoyancySystem : SystemBase
         //相对风速
         Vector3 UA = windSpeed - velocity;
         //船舶的纵向x方向向量
-        Vector3 xDir = -RigidbodyYDir;//TODO:实际是-y方向
+        //Vector3 xDir = -RigidbodyYDir;//TODO:实际是-y方向
+        Vector3 xDir= RigidbodyZDir;
         //实际应该只取水平的分量，然后单位化
         xDir = new Vector3(xDir.x, 0, xDir.z);
         xDir = Vector3.Normalize(xDir);
         //船舶的横向y方向向量
-        Vector3 yDir = RigidbodyXDir;//实际是x方向
+        Vector3 yDir = RigidbodyXDir;//TODO:实际是x方向
         yDir = new Vector3(yDir.x, 0, yDir.z);
         yDir = Vector3.Normalize(yDir);
 
@@ -851,7 +884,8 @@ public class BuoyancySystem : SystemBase
         Vector3 velocity = RigidbodyLinearVel;
         Vector3 UA = windSpeed - velocity;
         //船舶的纵向x方向向量
-        Vector3 xDir = -RigidbodyYDir;//TODO:实际是-y方向
+        //Vector3 xDir = -RigidbodyYDir;//TODO:实际是-y方向
+        Vector3 xDir = RigidbodyZDir;
         //实际应该只取水平的分量，然后单位化
         xDir = new Vector3(xDir.x, 0, xDir.z);
         xDir = Vector3.Normalize(xDir);
@@ -892,7 +926,8 @@ public class BuoyancySystem : SystemBase
         float Mk = YForce * 0.5f * Ck * airDensity * UA.magnitude * UA.magnitude  * AL * AL / LOA;//横摇，-x方向
         float Mn = YForce * 0.5f * Cn * airDensity * UA.magnitude * UA.magnitude  * AL * LOA;//艏摇,z方向
 
-        Vector3 zDir = RigidbodyZDir;
+        //Vector3 zDir = RigidbodyZDir;//TODO根据实际设定
+        Vector3 zDir = -RigidbodyYDir;
         zDir = Vector3.Normalize(zDir);
         windTorque.x = Mn * zDir.x - Mk * xDir.x;
         windTorque.y = Mn * zDir.y - Mk * xDir.y;
@@ -1419,9 +1454,14 @@ public class BuoyancySystem : SystemBase
 
     private Vector3 GetWindAtPosition(float3 position)
     {
-        Vector3 windSpeed = new Vector3(1.0f,0.0f,0.0f);
+        Vector3 windSpeed = new Vector3(1.0f, 0.0f, 0.0f);
 
         Vector3 windDir = new Vector3(1.0f, 0.0f, 0.0f);//风向可能用一个函数来代替
+        if (constWind)
+        {
+            windSpeed = constantWind * windDir;
+            return windSpeed;
+        }
 
         //风速=定常风+脉动风
         //float constantWind = 5.0f;//定常风可能用一个函数来代替

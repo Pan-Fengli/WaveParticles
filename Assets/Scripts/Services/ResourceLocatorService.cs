@@ -32,6 +32,13 @@ namespace OneBitLab.Services
         public float HBR = 0.987f;//最上层建筑物到水面的距离——测不出来，默认是船舶高度
 
         public bool applyWind = false;
+
+        public bool regular = false;
+        public float regularLambda = 0f;
+        public float regularHeight = 0f;
+        public bool fixXY = false;
+        public bool constWind = false;
+        public bool oldWind = false;
         //-------------------------------------------------------------
         [ReadOnly]
         public Vector3 WaterForce = new Vector3(0, 0, 0);

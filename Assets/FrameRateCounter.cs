@@ -2,14 +2,18 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro ;
+using UnityEngine.UI;
 
 public class FrameRateCounter : MonoBehaviour
 {
     [SerializeField]
     TextMeshProUGUI display = default;
-
+    private Text t_Text;
+    public GameObject TimeText;
     [SerializeField,Range(0.1f,2f)]
     float sampleDuration = 1f;
+    private float timer = 0f;
+    private float time = 0f;
 
     int frames;
     float duration;
@@ -18,12 +22,13 @@ public class FrameRateCounter : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
+        t_Text = TimeText.GetComponent<Text>();
     }
 
     // Update is called once per frame
     void Update()
     {
+        //updateTime();
         float frameDuration = Time.unscaledDeltaTime;
         frames += 1;
         duration += frameDuration;
@@ -46,6 +51,15 @@ public class FrameRateCounter : MonoBehaviour
             duration = 0;
             bestDuration = float.MaxValue;
             worstDuration = 0f;
+        }
+    }
+    private void updateTime()
+    {
+        timer += Time.deltaTime;
+        if (timer >= 0.1)// ∂® ±0.1√Î 10hz
+        {
+
+            t_Text.text = time.ToString();
         }
     }
 }

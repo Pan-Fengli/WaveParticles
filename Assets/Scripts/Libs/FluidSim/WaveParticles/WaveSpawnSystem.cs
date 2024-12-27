@@ -54,6 +54,9 @@ namespace OneBitLab.FluidSim
         private int M;
         private int L;
 
+        private bool regular;
+        private float regularLambda;
+
         //-------------------------------------------------------------
         public void AddExternalDependency(JobHandle newDependency)
         {
@@ -90,6 +93,7 @@ namespace OneBitLab.FluidSim
             float radius = (float)Math.PI / kLength;
             radius = 0.15f;
             c_WaveParticleRadius.Data = radius;
+            //生成指定数量的波粒子
             float2 dir = math.normalizesafe(m_Rnd.NextFloat2(-1.0f, 1.0f));
             for (int i = 0; i < c_StartEntitiesCount; i++)
             {
@@ -125,6 +129,9 @@ namespace OneBitLab.FluidSim
                 EntityManager.SetComponentData( entities[ i ], new Radius { Value = radius } );
             }
             entities.Dispose();
+
+
+
             /*int N = 40;
             int M = 40;
             int L = 10;//限制lambda max*/
@@ -141,6 +148,21 @@ namespace OneBitLab.FluidSim
             float border = 5.0f; //那个plane的大小是这么大
             float minHeight = 0.0015f;
             float dk = 2 * (float)Math.PI / L;
+
+            //生成指定参数的规则波
+            regular = ResourceLocatorService.Instance.regular;
+            if (regular)
+            {
+                //根据波长生成规则波
+                regularLambda = ResourceLocatorService.Instance.regularLambda;
+                float RRadius = regularLambda / 2.0f;
+                float Rk = math.PI / RRadius;
+                float RHeight = ResourceLocatorService.Instance.regularHeight/2.0f;//波粒子的高度是实际振幅的一半....
+                float RSpeed = (float)Math.Sqrt(gravity / Rk);
+                dir = new float2(1.0f, 0.0f);
+                GenerateParticles(dir, RHeight, RSpeed, Rk, RRadius, border);
+            }
+
             for (int n = -N / 2; n < N / 2 ; n++)
             {
                 float kx = 2 * (float)Math.PI * n / L;
@@ -184,7 +206,7 @@ namespace OneBitLab.FluidSim
                 }
             }
             //swell
-            for (int n = -N / 2; n < -N / 2; n++)
+/*            for (int n = -N / 2; n < -N / 2; n++)
             {
                 float kx = 2 * (float)Math.PI * n / L;
                 for (int m = -M / 2; m < M / 2; m++)
@@ -213,7 +235,7 @@ namespace OneBitLab.FluidSim
                     GenerateParticles(dir, Height, speed, K, Radius, border);
                 }
             }
-
+*/
             m_AllEntitiesQuery = GetEntityQuery(ComponentType.ReadOnly<WaveHeight>());
             Debug.Log(
                 "particle count:" + m_AllEntitiesQuery.CalculateEntityCountWithoutFiltering()
@@ -288,6 +310,7 @@ namespace OneBitLab.FluidSim
             {
                 //加一个随机数
                 float dev = m_Rnd.NextFloat(0, 0.5f * radius);
+                dev = 0;
                 for (int i = 0; i < 400; i++) //200
                 {
                     //Entity entity = EntityManager.CreateEntity(m_Archetype);

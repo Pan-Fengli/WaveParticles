@@ -11,6 +11,7 @@ using OneBitLab.Services;
 public class BoatDebugging : MonoBehaviour
 {
     public GameObject TextUI;
+
     private string path;
     private string excel_path;
     FileInfo ExcelFile;
@@ -22,6 +23,7 @@ public class BoatDebugging : MonoBehaviour
     ExcelWorksheet worksheet5;
     ExcelWorksheet worksheet6;
     private Text m_Text;
+
     private float timer = 0f;
     private float time = 0f;
     private int row_index = 0;
@@ -37,11 +39,14 @@ public class BoatDebugging : MonoBehaviour
 
     private Vector3 ZDir = new Vector3(0, 0, 0);
     private Vector3 up = new Vector3(0, 1.0f, 0);
+    private Vector3 StandardZDir = new Vector3(0, 0.99354f, -0.011345f);
     private float zangle =0f;
+    private float zangle2 = 0f;
 
     private Vector3 XDir = new Vector3(0, 0, 0);
     private Vector3 right = new Vector3(1.0f, 0, 0);
     private float xangle = 0f;
+   
     // Start is called before the first frame update
     void Load()
     {
@@ -68,6 +73,7 @@ public class BoatDebugging : MonoBehaviour
         worksheet6 = package.Workbook.Worksheets.Add("Ùº“°");
 
         m_Text = TextUI.GetComponent<Text>();
+
     }
     void Start()
     {
@@ -80,7 +86,9 @@ public class BoatDebugging : MonoBehaviour
 
         updateArea();
 
+
     }
+    
     private void updateForce()
     {
         FX = ResourceLocatorService.Instance.FX;
@@ -117,6 +125,7 @@ public class BoatDebugging : MonoBehaviour
         ZDir = ResourceLocatorService.Instance.ZDir;
         //º∆À„Ω«∂»≤Ó
         zangle = Vector3.SignedAngle(ZDir, Vector3.up, Vector3.forward);
+        zangle2 = Vector3.Angle(ZDir, StandardZDir);
 
         XDir = ResourceLocatorService.Instance.XDir;
         //º∆À„Ω«∂»≤Ó
@@ -150,6 +159,8 @@ public class BoatDebugging : MonoBehaviour
 
             worksheet5.Cells[row_index, 1].Value = time;
             worksheet5.Cells[row_index, 2].Value = zangle;
+            worksheet5.Cells[row_index, 3].Value = zangle2;
+            worksheet5.Cells[row_index, 4].Value = ZDir;
 
             worksheet6.Cells[row_index, 1].Value = time;
             worksheet6.Cells[row_index, 2].Value = xangle;
