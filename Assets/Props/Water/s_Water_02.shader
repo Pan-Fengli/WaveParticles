@@ -3,9 +3,9 @@
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
-        _Color ("Color", Color) = (1,1,1,1)
+        //_Color ("Color", Color) = (1,1,1,1)
         _Skybox ("Skybox", Cube) = "defaulttexture" {}
-        _LineColor("Line Color", COLOR) = (0,1,0,1)
+        //_LineColor("Line Color", COLOR) = (0,1,0,1)
         _OceanColorShallow("Ocean Color Shallow", Color) = (1, 1, 1, 1)
         _ShoreColorShallow("Shore Color Shallow", Color) = (1, 1, 1, 1)
         _OceanColorDeep("Ocean Color Deep", Color) = (1, 1, 1, 1)

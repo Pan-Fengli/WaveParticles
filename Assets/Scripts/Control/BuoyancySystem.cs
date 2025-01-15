@@ -104,6 +104,7 @@ public class BuoyancySystem : SystemBase
 
     private float time;
     private float TotalTime;
+    private float StartTime;
 
     private bool applyWind = false;
     private float XArea = 0.0f;
@@ -117,7 +118,8 @@ public class BuoyancySystem : SystemBase
     private float constantWind = 0.0f;
 
     private bool fixXY = false;
-    private bool constWind = false;
+    private bool constWind = false;//是否直接用数据，不模拟风场
+    private bool staticWind = false;//是否考虑脉动
     private bool oldWind = false;
 
     //-------------------------------------------------------------
@@ -212,6 +214,7 @@ public class BuoyancySystem : SystemBase
 
         fixXY = ResourceLocatorService.Instance.fixXY;
         constWind = ResourceLocatorService.Instance.constWind;
+        staticWind = ResourceLocatorService.Instance.staticWind;
         oldWind = ResourceLocatorService.Instance.oldWind;
 
         applyWind = ResourceLocatorService.Instance.applyWind;
@@ -275,6 +278,13 @@ public class BuoyancySystem : SystemBase
         float mass = 20;*/
 
         time = Time.DeltaTime;
+        if (StartTime < 0)//等10s再开始计算流固耦合
+        {
+            StartTime += time;
+            return ;
+        }
+
+
         Entities.WithAll<Tag_Water>().ForEach((in RenderMesh renderMesh, in LocalToWorld localToWorld) =>
         {
             waterMesh = renderMesh.mesh;
@@ -1466,8 +1476,15 @@ public class BuoyancySystem : SystemBase
         //风速=定常风+脉动风
         //float constantWind = 5.0f;//定常风可能用一个函数来代替
 
-        float pulseWind = Davenport(constantWind);
-        //pulseWind = 0;
+        float pulseWind;
+        if (staticWind)
+        {
+            pulseWind = 0;
+        }
+        else {
+            pulseWind = Davenport(constantWind);
+        }
+        //
 
         float U10 = constantWind + pulseWind;
         //Debug.Log("U10"+ U10);
@@ -1563,29 +1580,34 @@ public class BuoyancySystem : SystemBase
         float CLF = 0.0f;//主流阻力
         CLF1 = b10 + b11 * AL / (LOA * B) + b12 * C /LOA ;//0°的时候
         CLF2 = b20 + b21 * B / LOA + b22 * HC / LOA + b23 * AOD / (LOA * LOA) + b24 * AF / (B * B);//180°的时候
+
         if (phi <= (math.PI / 2))
         {
             CLF = CLF1 * math.cos(phi);
         }
         else {
-            CLF = CLF2 * math.cos(phi);
+            CLF = -CLF2 * math.cos(phi);
         }
        
         float CXLI = 0.0f;
         CXLI1 = delta10 + delta11 * AL / (LOA * HBR) + delta12 * AF / (B * HBR);
         CXLI2 = delta20 + delta21 * AL / (LOA * HBR) + delta22 * AF / AL + delta23 * B / LOA + delta24 * AF / (B * HBR);
+
         if (phi <= (math.PI / 2))
         {
             CXLI = CXLI1;
+            //CXLI = 11.5f;
         }
         else
         {
             CXLI = CXLI2;
+            //CXLI = -15.9f;
         }
 
         float CALF = 0.0f;
         CALF1 = ep10 + ep11 * AOD / AL + ep12 * B / LOA;
         CALF2 = ep20 + ep21 * AOD / AL;
+
         if (phi <= (math.PI / 2))
         {
             CALF = CALF1;
@@ -1597,7 +1619,18 @@ public class BuoyancySystem : SystemBase
         float CX = CLF + CXLI * (math.sin(phi)
             - 0.5f * math.sin(phi) * math.cos(phi) * math.cos(phi)) * math.sin(phi) * math.cos(phi)
             + CALF * math.sin(phi) * math.cos(phi) * math.cos(phi) * math.cos(phi);
-
+        //CX = CXLI * (math.sin(phi) - 0.5f * math.sin(phi) * math.cos(phi) * math.cos(phi)) * math.sin(phi) * math.cos(phi);
+/*        Debug.Log("CLF1" + CLF1);
+        Debug.Log("CLF2" + CLF2);
+        Debug.Log("CXLI1" + CXLI1);
+        Debug.Log("CXLI2" + CXLI2);
+        Debug.Log("CALF1" + CALF1);
+        Debug.Log("CALF2" + CALF2);
+        Debug.Log("CX:" + CX);
+        Debug.Log("CXLI:" + CXLI);
+        Debug.Log("phi:" + phi);
+        Debug.Log("math.sin(phi):" + math.sin(phi));
+        Debug.Log("math.cos(phi):" + math.cos(phi));*/
         return CX;
     }
     public float GetCy(float phi)

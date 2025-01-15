@@ -39,6 +39,7 @@ namespace OneBitLab.Services
         public bool fixXY = false;
         public bool constWind = false;
         public bool oldWind = false;
+        public bool staticWind = false;
         //-------------------------------------------------------------
         [ReadOnly]
         public Vector3 WaterForce = new Vector3(0, 0, 0);
@@ -58,17 +59,18 @@ namespace OneBitLab.Services
         [ReadOnly]
         public float YArea = 0.0f;
 
-        [ReadOnly]
+        //[ReadOnly]
         public float FX = 0.0f;
-        [ReadOnly]
+
+        //[ReadOnly]
         public float FY = 0.0f;
 
-        [ReadOnly]
+        //[ReadOnly]
         public float FXOld = 0.0f;
-        [ReadOnly]
+        //[ReadOnly]
         public float FYOld = 0.0f;
 
-        [ReadOnly]
+        //[ReadOnly]
         public float Phi = 0.0f;
 
         [ReadOnly]
